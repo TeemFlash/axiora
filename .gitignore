@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+.agents/
+.codex/
+.axiora/
+account.json
+hardware.json
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+reports/

@@ -1,0 +1,4 @@
+# Optional rules for distributions without spi/gpio groups configured.
+# Create the axiora group and add the desktop user before installing these rules.
+SUBSYSTEM=="spidev", KERNEL=="spidev0.[012]", GROUP="axiora", MODE="0660"
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="axiora", MODE="0660"

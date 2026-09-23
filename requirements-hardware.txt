@@ -1,0 +1,8 @@
+# GTK and gpiozero/lgpio are preferably installed using Kali/Debian packages.
+# See README.md; pip is optional inside a --system-site-packages virtualenv.
+pyserial>=3.5,<4
+spidev>=3.6,<4
+gpiozero>=2.0,<3
+lgpio>=0.2.2,<1
+# Optional: kernel-timestamped OOK capture on CC1101 GDO0
+gpiod>=2.1,<3
