@@ -42,6 +42,8 @@ from gi.repository import Gtk, Gdk, GLib, Pango  # noqa: E402
 from axiora_auth import Credentials
 from axiora_hardware import HardwareService, load_config
 from axiora_pages import HardwarePages
+from axiora_workbench import Workbench
+from axiora_workbench_pages import WorkbenchPages
 
 APP_NAME = "Axiora"
 VALID_LOGIN = "admin"
@@ -345,9 +347,10 @@ class Engine:
     def __init__(self, db, demo=False, config_path=None):
         self.demo = demo
         self.hardware = None
-        self.config_path = config_path or os.path.join(APP_DIR, "hardware.json")
+        settings_dir = os.path.join(APP_DIR, 'demo') if demo else APP_DIR
+        self.config_path = config_path or os.path.join(settings_dir, "hardware.json")
         self.hardware_config = load_config(self.config_path)
-        self.credentials = Credentials(os.path.join(APP_DIR, "account.json"))
+        self.credentials = Credentials(os.path.join(settings_dir, "account.json"))
         self.hardware_messages = deque(maxlen=200)
         self.capture_history = deque(maxlen=64)
         self._network_counters = {}
@@ -1192,14 +1195,18 @@ def read_uptime():
 
 
 MENU = [("dash", "Главная"), ("hardware", "Модули"), ("net", "Сеть"), ("src", "Источники"), ("events", "События"),
-        ("ai", "Аналитика"), ("reports", "Отчёты"), ("system", "Система")]
+        ("tools", "Инструменты"), ("ai", "Аналитика"), ("reports", "Отчёты"), ("system", "Система")]
 PPI_NOTE = "5\" · 800×480 · цели касания ≥ 48 px"
 
 
-class AxioraWindow(HardwarePages, Gtk.Window):
+class AxioraWindow(WorkbenchPages, HardwarePages, Gtk.Window):
     def __init__(self, engine, web, size=(SCREEN_W, SCREEN_H), fullscreen=False):
         super().__init__(title=APP_NAME)
         self.engine, self.web = engine, web
+        self.engine.workbench = Workbench(os.path.join(APP_DIR, 'demo' if engine.demo else 'live', 'workbench'),
+                                          disabled=engine.demo)
+        self._last_activity = time.monotonic()
+        self.connect('event', self._on_activity)
         self.win_w, self.win_h = size
         self.set_default_size(*size)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -1219,6 +1226,7 @@ class AxioraWindow(HardwarePages, Gtk.Window):
         self.stack.set_transition_duration(200)
         self.add(self.stack)
         self.stack.add_named(self._build_login(), "login")
+        self.stack.add_named(self._build_password_setup(), "setup")
         self.stack.add_named(self._build_main(), "main")
         self.stack.set_visible_child_name("login")
         if fullscreen or engine.settings.get("fullscreen") == "1":
@@ -1233,6 +1241,7 @@ class AxioraWindow(HardwarePages, Gtk.Window):
         GLib.source_remove(self._tick_id)
         GLib.source_remove(self._hardware_id)
         self.web.stop()
+        self.engine.workbench.close()
         if self.engine.hardware:
             self.engine.hardware.close()
         self.engine.db.c.close()
@@ -1240,6 +1249,56 @@ class AxioraWindow(HardwarePages, Gtk.Window):
             Gtk.main_quit()
 
     # ═══════════════════════════════════════ вход
+    def _on_activity(self, _widget, event):
+        if event.type in (Gdk.EventType.KEY_PRESS, Gdk.EventType.BUTTON_PRESS,
+                          Gdk.EventType.MOTION_NOTIFY, Gdk.EventType.TOUCH_BEGIN, Gdk.EventType.SCROLL):
+            self._last_activity = time.monotonic()
+        return False
+
+    def _build_password_setup(self):
+        root = vbox(10)
+        root.set_halign(Gtk.Align.CENTER)
+        root.set_valign(Gtk.Align.CENTER)
+        root.set_size_request(400, -1)
+        root.pack_start(lbl('Задайте рабочий пароль', 'logo'), False, False, 0)
+        root.pack_start(lbl('Первый вход: минимум 10 символов.', wrap=True), False, False, 0)
+        self.setup_password = Gtk.Entry(visibility=False)
+        self.setup_password.set_placeholder_text('Новый пароль')
+        self.setup_repeat = Gtk.Entry(visibility=False)
+        self.setup_repeat.set_placeholder_text('Повторите пароль')
+        for entry in (self.setup_password, self.setup_repeat):
+            root.pack_start(entry, False, False, 0)
+        self.setup_error = lbl('', 'error', wrap=True)
+        root.pack_start(self.setup_error, False, False, 0)
+        root.pack_start(button('Сохранить и войти', self.on_setup_password, 'primary'), False, False, 0)
+        root.pack_start(button('Назад', self.on_logout), False, False, 0)
+        return root
+
+    def on_setup_password(self, *_):
+        if self.stack.get_visible_child_name() != 'setup':
+            return
+        password = self.setup_password.get_text()
+        if len(password) < 10 or password != self.setup_repeat.get_text():
+            self.setup_error.set_text('Пароли должны совпадать и содержать минимум 10 символов')
+            return
+        try:
+            self.engine.credentials.change(password)
+        except OSError as exc:
+            self.setup_error.set_text(str(exc))
+            return
+        self.setup_password.set_text('')
+        self.setup_repeat.set_text('')
+        self.setup_error.set_text('')
+        self._enter_session()
+
+    def _enter_session(self):
+        self._last_activity = time.monotonic()
+        self.engine.log('INFO', 'User admin logged in')
+        self.user_label.set_text(VALID_LOGIN)
+        self.menu_list.select_row(self.menu_list.get_row_at_index(0))
+        self.stack.set_visible_child_name('main')
+        self.refresh_current()
+
     def _build_login(self):
         outer = Gtk.Box()
         outer.set_halign(Gtk.Align.CENTER)
@@ -1285,11 +1344,10 @@ class AxioraWindow(HardwarePages, Gtk.Window):
             if self._kb and self._kb.poll() is None:
                 self._kb.terminate()
                 self._kb = None
-            self.engine.log("INFO", "User admin logged in")
-            self.user_label.set_text(VALID_LOGIN)
-            self.menu_list.select_row(self.menu_list.get_row_at_index(0))
-            self.stack.set_visible_child_name("main")
-            self.refresh_current()
+            if not self.engine.demo and self.engine.credentials.needs_setup():
+                self.stack.set_visible_child_name('setup')
+            else:
+                self._enter_session()
         else:
             self.error_label.set_text("Неверный логин или пароль")
             self.entry_pass.grab_focus()
@@ -1298,6 +1356,12 @@ class AxioraWindow(HardwarePages, Gtk.Window):
         self.engine.log("INFO", "User admin logged out")
         self.web_switch.set_active(False)
         self.web.stop()
+        self.engine.workbench.cancel_all()
+        self.clear_workbench_secrets()
+        self.setup_password.set_text('')
+        self.setup_repeat.set_text('')
+        for entry in getattr(self, 'account_entries', []):
+            entry.set_text('')
         if self.engine.hardware:
             for name in self.engine.hardware_config:
                 self.hw_command("disconnect", name)
@@ -1376,6 +1440,9 @@ class AxioraWindow(HardwarePages, Gtk.Window):
                          ("Настройка", self.tab_hardware_config, True)],
             "net": [("Обзор", self.tab_net, True), ("Устройства", self.tab_devices, False),
                     ("Потоки", self.tab_flows, False)],
+            "tools": [("Запуск", self.tab_workbench_tools, True), ("Задачи", self.tab_workbench_jobs, True),
+                      ("Проекты", self.tab_workbench_projects, True), ("Находки", self.tab_workbench_findings, True),
+                      ("Модули", self.tab_workbench_modules, True)],
             "src": [("RFID", self.tab_rfid, False), ("Радио", self.tab_radio, False),
                     ("Наборы", self.tab_sets, True)],
             "events": [("Журнал", self.tab_log, False), ("Тревоги", self.tab_alerts, False),
@@ -1440,6 +1507,8 @@ class AxioraWindow(HardwarePages, Gtk.Window):
     # ═══════════════════════════════════════ такт, уведомления
     def on_tick(self):
         E = self.engine
+        if self.stack.get_visible_child_name() == 'main' and time.monotonic() - self._last_activity >= 600:
+            self.on_logout()
         E.tick()
         self.clock.set_text(time.strftime("%d.%m  %H:%M:%S"))
         st, col = E.state()

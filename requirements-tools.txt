@@ -1,0 +1,7 @@
+# Optional workbench Python integrations. GTK and command-line tools are
+# installed separately using Kali/Debian packages; see README.md.
+# Use a virtualenv with --system-site-packages to retain the system GTK bindings.
+netmiko>=4,<5
+pyserial>=3.5,<4
+keyring>=24,<26
+reportlab>=4,<5

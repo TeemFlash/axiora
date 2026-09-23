@@ -13,7 +13,11 @@ import axiora as app
 from gi.repository import Gtk, Gdk, GLib
 
 failures = []
-sys.excepthook = lambda kind, value, tb: failures.append(f'{kind.__name__}: {value}')
+original_hook = sys.excepthook
+def capture_exception(kind, value, tb):
+    failures.append(f'{kind.__name__}: {value}')
+    original_hook(kind, value, tb)
+sys.excepthook = capture_exception
 
 def pump():
     for _ in range(20):
@@ -37,6 +41,11 @@ assert window.stack.get_visible_child_name() == 'login'
 window.entry_pass.set_text('admin')
 window.on_login()
 pump()
+assert window.stack.get_visible_child_name() == 'setup'
+window.setup_password.set_text('axiora-test-password')
+window.setup_repeat.set_text('axiora-test-password')
+window.on_setup_password()
+pump()
 assert window.stack.get_visible_child_name() == 'main'
 assert engine.total == 0 and not engine.devices
 for key, notebook in window.notebooks.items():
@@ -45,6 +54,22 @@ for key, notebook in window.notebooks.items():
         pump()
         print(f'OK {key}/{page} size={window.get_size().width}x{window.get_size().height}')
 assert window.get_size().width == 800, window.get_size()
+# Render every real adapter form; execute only the offline compatibility catalog.
+window.goto('tools', 0)
+for tool_id in engine.workbench.tools:
+    window.wb_tool_combo.set_active_id(tool_id)
+    pump()
+    assert window.get_size().width == 800, (tool_id, window.get_size())
+window.wb_tool_combo.set_active_id('hardware.catalog')
+window.wb_launch_button.clicked()
+for _ in range(50):
+    pump()
+    jobs = engine.workbench.jobs()
+    if jobs and jobs[0]['status'] not in ('queued', 'running'):
+        break
+assert jobs[0]['status'] == 'succeeded', jobs
+window.goto('tools', 1)
+pump()
 # Check the same credentials protect the local HTTP API.
 import base64
 import json
@@ -57,7 +82,7 @@ try:
     raise AssertionError('Unauthenticated API request was accepted')
 except HTTPError as exc:
     assert exc.code == 401
-request = Request(url + '/api', headers={'Authorization': 'Basic ' + base64.b64encode(b'admin:admin').decode()})
+request = Request(url + '/api', headers={'Authorization': 'Basic ' + base64.b64encode(b'admin:axiora-test-password').decode()})
 with urlopen(request, timeout=2) as response:
     assert json.load(response)['events'] == 0
 # Feed real-shaped worker output through the GTK/SQLite bridge.
@@ -89,6 +114,12 @@ pump()
 shot_dir = Path('/tmp/axiora-ui')
 shot_dir.mkdir(exist_ok=True)
 def screenshot(name):
+    window.queue_draw()
+    pump()
+    # Render the widget directly: a composited/occluded X11 window can yield
+    # black pixels through pixbuf_get_from_window even though GTK is healthy.
+    window.check_resize()
+    window.size_allocate(window.get_allocation())
     width, height = window.get_size()
     import cairo
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
@@ -104,6 +135,9 @@ screenshot('cc1101.png')
 window.goto('dash')
 pump()
 screenshot('dashboard.png')
+window.goto('tools', 0)
+pump()
+screenshot('workbench.png')
 window.on_logout()
 pump()
 screenshot('login.png')
@@ -111,6 +145,13 @@ assert window.stack.get_visible_child_name() == 'login'
 assert window.web.server is None
 assert not window.memory_key.get_text()
 assert window.memory_preview is None
+window.entry_login.set_text('admin')
+window.entry_pass.set_text('axiora-test-password')
+window.on_login()
+assert window.stack.get_visible_child_name() == 'main'
+window._last_activity = time.monotonic() - 601
+window.on_tick()
+assert window.stack.get_visible_child_name() == 'login'
 window.destroy()
 pump()
 assert not engine.hardware.thread.is_alive()

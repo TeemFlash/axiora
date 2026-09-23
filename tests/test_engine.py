@@ -57,6 +57,14 @@ class EngineTests(unittest.TestCase):
     def test_non_ascii_login_is_rejected_without_crashing(self):
         self.assertFalse(self.engine.credentials.verify('админ', 'пароль'))
 
+    def test_demo_developer_account_and_config_are_isolated(self):
+        self.engine.credentials.change('live-password-123')
+        demo = axiora.Engine(axiora.DB(str(self.home / 'demo.db')), demo=True)
+        self.addCleanup(demo.db.c.close)
+        self.assertTrue(demo.credentials.verify('admin', 'admin'))
+        self.assertTrue(self.engine.credentials.verify('admin', 'live-password-123'))
+        self.assertNotEqual(demo.config_path, self.engine.config_path)
+
 
 if __name__ == '__main__':
     unittest.main()

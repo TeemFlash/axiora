@@ -1,0 +1,14 @@
+{
+  "schema": "axiora.radio-profile.v1",
+  "name": "CC1101 laboratory 433.92 MHz",
+  "module": "cc1101",
+  "settings": {
+    "frequency": 433.92,
+    "mode": "packet",
+    "modulation": "2-FSK",
+    "bitrate": 38.4,
+    "bandwidth": 101.6,
+    "deviation": 20.6,
+    "sync": "D391"
+  }
+}

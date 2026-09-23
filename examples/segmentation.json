@@ -1,0 +1,12 @@
+[
+  {
+    "target": "127.0.0.1",
+    "port": 8080,
+    "expected": "open"
+  },
+  {
+    "target": "127.0.0.1",
+    "port": 65534,
+    "expected": "closed"
+  }
+]

@@ -38,3 +38,7 @@ class Credentials:
             record = dict(self.record)
         digest = hashlib.scrypt(password.encode(), salt=bytes.fromhex(record["salt"]), n=16384, r=8, p=1).hex()
         return hmac.compare_digest(username.encode(), record["username"].encode()) and hmac.compare_digest(digest, record["hash"])
+
+    def needs_setup(self):
+        """Also catch existing development accounts created by older versions."""
+        return self.verify('admin', 'admin')

@@ -7,7 +7,20 @@ import subprocess
 import time
 
 from gi.repository import Gtk, Gdk, GLib
-from axiora_hardware import NAMES, PINOUT, save_config
+from axiora_hardware import NAMES, PINOUT, save_config, validate_config
+
+
+def apply_radio_profile(config, profile):
+    if not isinstance(profile, dict) or profile.get('schema') != 'axiora.radio-profile.v1':
+        raise ValueError('Ожидается профиль axiora.radio-profile.v1')
+    module, settings = profile.get('module'), profile.get('settings')
+    allowed = {'cc1101': {'frequency', 'mode', 'modulation', 'bitrate', 'bandwidth', 'deviation', 'sync'},
+               'nrf24': {'channel', 'address'}}
+    if module not in allowed or not isinstance(settings, dict) or set(settings) - allowed[module]:
+        raise ValueError('Некорректный модуль или посторонние настройки в профиле')
+    updated = copy.deepcopy(config)
+    updated[module].update(settings)
+    return validate_config(updated)
 
 
 def box():
@@ -150,6 +163,37 @@ class HardwarePages:
             except Exception as exc:
                 message.set_text(str(exc))
         root.pack_start(button("Сохранить настройки модулей", save), False, False, 0)
+        def import_profile(*_):
+            dialog = Gtk.FileChooserDialog(title='Выберите radio-profile.json', transient_for=self,
+                                           action=Gtk.FileChooserAction.OPEN)
+            dialog.add_buttons('Отмена', Gtk.ResponseType.CANCEL, 'Применить профиль', Gtk.ResponseType.OK)
+            try:
+                if dialog.run() != Gtk.ResponseType.OK:
+                    return
+                path = dialog.get_filename()
+                if os.path.getsize(path) > 65536:
+                    raise ValueError('Профиль больше 64 КиБ')
+                with open(path, encoding='utf-8') as source:
+                    profile = json.load(source)
+                config = apply_radio_profile(self.engine.hardware_config, profile)
+                config = save_config(self.engine.config_path, config)
+                self.engine.hardware_config = config
+                self.hw_command('configure', data=config)
+                for key, items in controls.items():
+                    for field, widget in items.items():
+                        value = config[key][field]
+                        if field == 'enabled':
+                            widget.set_active(value)
+                        elif field in ('mode', 'modulation'):
+                            widget.set_active_id(value)
+                        else:
+                            widget.set_text(str(value))
+                message.set_text('Профиль применён. Подключите модуль заново.')
+            except (OSError, ValueError, TypeError) as exc:
+                message.set_text(str(exc))
+            finally:
+                dialog.destroy()
+        root.pack_start(button('Загрузить и применить радиопрофиль', import_profile), False, False, 0)
         root.pack_start(message, False, False, 0)
         return root, None
 
@@ -429,7 +473,8 @@ class HardwarePages:
         root = box()
         root.pack_start(label("Локальная учётная запись admin. Начальный пароль для разработки: admin."), False, False, 0)
         entries = []
-        for hint in ("Текущий пароль", "Новый пароль (минимум 8 символов)", "Повторите новый пароль"):
+        self.account_entries = entries
+        for hint in ("Текущий пароль", "Новый пароль (минимум 10 символов)", "Повторите новый пароль"):
             entry = Gtk.Entry(visibility=False)
             entry.set_placeholder_text(hint)
             root.pack_start(entry, False, False, 0)
@@ -439,8 +484,8 @@ class HardwarePages:
             old, new, repeat = [item.get_text() for item in entries]
             if not self.engine.credentials.verify("admin", old):
                 result.set_text("Текущий пароль неверен")
-            elif len(new) < 8 or new != repeat:
-                result.set_text("Пароли должны совпадать и содержать минимум 8 символов")
+            elif len(new) < 10 or new != repeat:
+                result.set_text("Пароли должны совпадать и содержать минимум 10 символов")
             else:
                 try:
                     self.engine.credentials.change(new)
