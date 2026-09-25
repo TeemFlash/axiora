@@ -17,6 +17,8 @@ jobs:
         run: |
           /usr/bin/python3 -m compileall -q axiora*.py tests
           sh -n install-desktop.sh
+          sh -n install-and-run.sh
+          /usr/bin/python3 axiora_setup.py --dry-run
       - name: Unit tests
         run: /usr/bin/python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Compile Raspberry Pi overlay
