@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="480" viewBox="0 0 1440 480" role="img" aria-labelledby="title description">
+  <title id="title">Axiora - от сигнала к доказательству</title>
+  <desc id="description">Синяя инженерная консоль. Сигналы сети, радио и RFID соединяются с проектом, задачами, доказательствами и отчётом.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#102c48"/>
+      <stop offset="1" stop-color="#081625"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#82bbdf" opacity=".17"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="480" rx="24" fill="url(#background)"/>
+  <rect width="1440" height="480" rx="24" fill="url(#grid)"/>
+  <path d="M0 479H1440" stroke="#1479c4" stroke-width="6"/>
+  <g fill="none" stroke="#4ba9e9">
+    <circle cx="1160" cy="225" r="204" opacity=".09"/>
+    <circle cx="1160" cy="225" r="162" opacity=".12"/>
+  </g>
+  <g font-family="DejaVu Sans, Arial, sans-serif">
+    <text x="68" y="73" fill="#85c5f2" font-size="19" letter-spacing="3">ИНЖЕНЕРНАЯ КОНСОЛЬ</text>
+    <text x="62" y="188" fill="#f2f8ff" font-size="98" font-weight="700" letter-spacing="8">AXIORA</text>
+    <text x="68" y="267" fill="#f2f8ff" font-size="39" font-weight="700">От сигнала</text>
+    <text x="68" y="320" fill="#85c5f2" font-size="39" font-weight="700">к доказательству.</text>
+    <path d="M68 355H171" stroke="#40a7ef" stroke-width="3"/>
+    <text x="68" y="414" fill="#a5bbce" font-size="20">Raspberry Pi 5</text>
+    <circle cx="247" cy="407" r="3" fill="#1479c4"/>
+    <text x="266" y="414" fill="#a5bbce" font-size="20">Kali Linux</text>
+    <circle cx="389" cy="407" r="3" fill="#1479c4"/>
+    <text x="408" y="414" fill="#a5bbce" font-size="20">GTK 3</text>
+
+    <g fill="none" stroke="#368bc4" stroke-width="2">
+      <path d="M841 137H898Q914 137 914 153V225H1004"/>
+      <path d="M841 225H1004"/>
+      <path d="M841 313H898Q914 313 914 297V225"/>
+    </g>
+    <g fill="#102b45" stroke="#33668d">
+      <rect x="694" y="106" width="148" height="62" rx="12"/>
+      <rect x="694" y="194" width="148" height="62" rx="12"/>
+      <rect x="694" y="282" width="148" height="62" rx="12"/>
+    </g>
+    <g fill="#e0f1ff" font-size="22">
+      <text x="742" y="145">Сеть</text>
+      <text x="725" y="233">Радио</text>
+      <text x="739" y="321">RFID</text>
+    </g>
+    <g fill="#7cc8ff">
+      <circle cx="841" cy="137" r="4"/>
+      <circle cx="841" cy="225" r="4"/>
+      <circle cx="841" cy="313" r="4"/>
+      <circle cx="914" cy="225" r="6"/>
+    </g>
+    <rect x="1004" y="93" width="362" height="266" rx="16" fill="#10283f" stroke="#3b759f"/>
+    <path d="M1028 147H1342" stroke="#2d4c67"/>
+    <text x="1031" y="128" fill="#85c5f2" font-size="17" letter-spacing="3">ПРОЕКТ</text>
+    <circle cx="1336" cy="121" r="5" fill="#68c6ed"/>
+    <g font-size="23" fill="#edf6ff">
+      <text x="1058" y="193">Задачи</text>
+      <text x="1058" y="256">Доказательства</text>
+      <text x="1058" y="319">Отчёт</text>
+    </g>
+    <g fill="none" stroke="#55aff0" stroke-width="2">
+      <rect x="1029" y="177" width="14" height="18" rx="3"/>
+      <rect x="1029" y="240" width="14" height="18" rx="3"/>
+      <rect x="1029" y="303" width="14" height="18" rx="3"/>
+      <path d="M1036 201V230M1036 264V293" stroke="#376687" stroke-dasharray="3 4"/>
+    </g>
+    <text x="694" y="414" fill="#718da5" font-size="17" letter-spacing="2">НАБЛЮДАТЬ / ПРОВЕРЯТЬ / СОХРАНЯТЬ</text>
+  </g>
+</svg>
