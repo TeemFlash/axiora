@@ -1,0 +1,29 @@
+{
+  "captured": "2026-11-26",
+  "interface": "native GTK 3",
+  "size": [
+    1280,
+    800
+  ],
+  "mode": "demo; temporary empty project; no network or hardware operations",
+  "images": {
+    "native-00-login.png": "c4387698c939b37bf0002692f0b37ca2fcda67c1c16ab863155e2842015c8b61",
+    "native-01-now.png": "5c10b6b2d4dee7d03abd4d2e6c44699460cd0e78022d76200745e347d4cde659",
+    "native-02-check.png": "b952307f3d08675dbb7882cd9d10dba3de07739cd1f670670c052e63b758bff8",
+    "native-03-observe.png": "528b72aced00dcc323b83099a151a90c85f1e1f40ade7916d031207651f89f4e",
+    "native-04-data.png": "ad0773c89e4fa6e0a30c56d76b6af49c3a9d4d8be00ab76037840413796d49fb",
+    "native-05-reports.png": "5593e96d69322a978244b062e04df4d14d0ec9cdf101df2b1323b39e1ea6bdc8",
+    "native-06-settings.png": "31cb4416ebf92169c743246fe01960c9dbe4fecf54af9d7041c6cd74eb9d46bd"
+  },
+  "source_sha256": {
+    "native_ui/__init__.py": "70d9318ccb1c33b85e98aa675e58537055cb01553577637004536bf54234c309",
+    "native_ui/app.py": "d1c356dca01a1ec65e6578392d7f8f4eb7ef776bf397ccfdb24af647ad35ed31",
+    "native_ui/connections.py": "0d1564855810e2fd9ea2e67e10f5be299a6204dab9c3e0bd546a6abd849dab8c",
+    "native_ui/fonts.py": "d24eea4d41d75595c44413e0d48ff2374b32bbfc3c6e150c6986def51ce9ae62",
+    "native_ui/service.py": "8a1cf9befa7900515f76b5ed5ee5fb3f9f26155f7e7e378992112838696dded4",
+    "native_ui/settings_pages.py": "0226633c6c2e656c78c4248c22cd9ca85e0a641d370d8f189d4384999d842dba",
+    "native_ui/style.css": "ce45274322978b7ce8f98ebad0760ffb795eefc3be365cced89eed1541e554fa",
+    "native_ui/ui.py": "2f055c67d3c5be89cc9c61ce6ac0b3fed59d57e5057770d77e6085e468257799",
+    "native_ui/work_pages.py": "6f9f93d3965b4a9d60ab13679a6614133ef4805143aa3aeea0fb7dede0817356"
+  }
+}
